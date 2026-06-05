@@ -11,7 +11,7 @@ from openpyxl import Workbook
 
 #自定义参数 可修改  Begin
 #深证ETF日期，必须是交易日，格式 "2026-06-04" ，默认是当前日期前一天 ，
-STAT_DATE = "2026-05-31"
+STAT_DATE = ""
 #标记上证基金代码
 SHMark = ['510330' , '510050']    
 #标记深证基金 
@@ -25,26 +25,21 @@ headers = {
     }
 fundNameMap = {}
 
-def getFoudName( fundNameStr ):
-    # print(fundNameStr)
-    url2 = "https://query.sse.com.cn/security/stock/queryExpandName.do"
-    params2 = {
-        "jsonCallBack": "jsonpCallback00000002",
-        "secCodes": fundNameStr,
-        "_": int(time.time() * 1000)
-    }
-    response2 = requests.get(url2, headers=headers , params = params2)
-    responseJson2 = json.loads(response2.text[22:-1])
-    # print(responseJson2['result'])
-    for row in responseJson2['result'] :
-        fundNameMap[row[0]] = row[1]
+
+# 打印日志方法
+debugFlag = '0'
+def printff ( obj , level ):
+    if( debugFlag == '0' ):
+        if( level == 'info' ):
+            print( obj )
+    else:
+        print( obj )
 
 
 def getAllFoudName( responseJson ):
     fundNameList= []
     for index,row in enumerate(responseJson['result']) :
         fundNameList.append(row['SEC_CODE'])
-
         if( (index+1) % 300 == 0 ):
             fundNameStr = ','.join(fundNameList)
             fundNameList= []
@@ -54,7 +49,22 @@ def getAllFoudName( responseJson ):
         fundNameStr = ','.join(fundNameList)
         getFoudName(fundNameStr)
   
-    # print(fundNameMap)  
+    printff( fundNameMap , "debug" )
+
+
+def getFoudName( fundNameStr ):
+    printff( fundNameStr , "debug" )
+    url2 = "https://query.sse.com.cn/security/stock/queryExpandName.do"
+    params2 = {
+        "jsonCallBack": "jsonpCallback00000002",
+        "secCodes": fundNameStr,
+        "_": int(time.time() * 1000)
+    }
+    response2 = requests.get(url2, headers=headers , params = params2)
+    responseJson2 = json.loads(response2.text[22:-1])
+    printff( responseJson2['result'] , "debug" )
+    for row in responseJson2['result'] :
+        fundNameMap[row[0]] = row[1]
 
 
 
@@ -66,10 +76,12 @@ if __name__ == "__main__":
         today = datetime.now().date()
         yesterday = today - timedelta(days=1)
         STAT_DATE = yesterday.strftime("%Y-%m-%d")
-    print("获取日期" + STAT_DATE)
+    printff( "获取日期" + STAT_DATE , "info" )
+
 
     ## step2 获取上交易所ETF数据
-    print("获取上交所数据Begin>>>>>>>")
+    printff( "获取上交所数据Begin>>>>>>>" , "info" )
+
     url = "https://query.sse.com.cn/commonQuery.do"
 
     params = {
@@ -82,16 +94,16 @@ if __name__ == "__main__":
 
     response = requests.get(url, headers=headers , params = params)
     responseJson = json.loads(response.text[22:-1])
-    # print(responseJson['result'])
+    printff( "responseJson['result']" , "debug" )
 
 
     ## step3 获取上交所基金中文名
     getAllFoudName(responseJson)
-    print("获取上交所数据End>>>>>>>")
+    printff( "获取上交所数据End>>>>>>>" , "info" )
 
 
     ## step4 获取深交易所ETF数据
-    print("获取深交所数据Begin>>>>>>>")
+    printff( "获取深交所数据Begin>>>>>>>" , "info" )
 
     urlSZ = "https://www.szse.cn/api/report/ShowReport/data"
     paramsSZ = {
@@ -114,21 +126,23 @@ if __name__ == "__main__":
         responseJsonSZ = json.loads(responseSZ.text)
         pagecount = responseJsonSZ[0]['metadata']['pagecount']
         if( pagecount == 0 ):
-            print( "执行失败：获取深交所数据失败,请检查日期" )
+            printff( "执行失败：获取深交所数据失败,请检查日期" , "info" )
             sys.exit(1)
         if( nowPage == pagecount  ):
             lastPage = True 
         nowPage = nowPage + 1
   
-        # print( responseJsonSZ[0]['data'] )
-        print( "已获取" + str(nowPage - 1) + "/" + str(pagecount) )
+        printff( responseJsonSZ[0]['data'] , "debug" )
+        printff( "已获取" + str(nowPage - 1) + "/" + str(pagecount) , "info" )
+
         responseJsonSZData = responseJsonSZData +  responseJsonSZ[0]['data'] 
-    # print( responseJsonSZData )
-    print("获取深交所数据End>>>>>>>")
+
+    printff( responseJsonSZData , "debug" )
+    printff( "获取深交所数据End>>>>>>>" , "info" )
 
 
     # ## step5 写入EXCEL
-    print("开始写入数据>>>>>>>>>>>")
+    printff( "开始写入数据>>>>>>>>>>>" , "info" )
 
     wb = Workbook()
     nowTime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")  # 2026-06-05-143045
@@ -151,8 +165,8 @@ if __name__ == "__main__":
 
 
     wb.save( file_path )
-    print("开始写入数据完成>>>>>>>>>>>")
-    print("执行成功，EXCEL已创建至C盘根目录，文件名《" + nowTime + ".xlsx》")
+    printff( "开始写入数据完成>>>>>>>>>>>" , "info" )
+    printff( "执行成功，EXCEL已创建至C盘根目录，文件名《" + nowTime + ".xlsx》" , "info" )
 
 
 
