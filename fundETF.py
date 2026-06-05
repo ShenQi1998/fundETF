@@ -141,11 +141,11 @@ if __name__ == "__main__":
     printff( "获取深交所数据End>>>>>>>" , "info" )
 
 
-    # ## step5 写入EXCEL
+    ## step5 写入EXCEL
     printff( "开始写入数据>>>>>>>>>>>" , "info" )
 
     wb = Workbook()
-    nowTime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")  # 2026-06-05-143045
+    nowTime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
     file_path = 'C://' + nowTime + '.xlsx'
 
 
